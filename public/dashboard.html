@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { color: #007BFF; }
+  </style>
+</head>
+<body>
+  <h1>Welcome to Admin Dashboard</h1>
+  <p id="welcomeMsg">Loading...</p>
+  <button onclick="logout()">Logout</button>
+
+  <script>
+    const API = "http://localhost:5000/api";
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Not authorized. Please login first.");
+      window.location.href = "index.html";
+    }
+
+    async function loadDashboard() {
+      const res = await fetch(`${API}/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById("welcomeMsg").innerText = data.message;
+      } else {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        window.location.href = "index.html";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "index.html";
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login with OTP + Remember Me</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 20px;
+      width: 350px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input[type="email"], input[type="password"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    label {
+      font-size: 14px;
+    }
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+    .link {
+      text-align: right;
+      margin-top: 10px;
+    }
+    .link a {
+      font-size: 14px;
+      color: #007BFF;
+      text-decoration: none;
+    }
+    .hidden {
+      display: none;
+    }
+    .message {
+      margin-top: 10px;
+      font-size: 14px;
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login Form -->
+    <div id="login-form">
+      <h2>Login</h2>
+      <input type="email" id="login-email" placeholder="Email" required>
+      <input type="password" id="login-password" placeholder="Password" required>
+      <label><input type="checkbox" id="rememberMe"> Remember Me</label>
+      <button class="btn" onclick="login()">Login</button>
+      <div class="link"><a href="#" onclick="showForgot()">Forgot Password?</a></div>
+      <div id="login-message" class="message"></div>
+    </div>
+
+    <!-- OTP Form -->
+    <div id="otp-form" class="hidden">
+      <h2>Verify OTP</h2>
+      <input type="text" id="otp-code" placeholder="Enter OTP">
+      <button class="btn" onclick="verifyOtp()">Verify</button>
+      <div id="otp-message" class="message"></div>
+    </div>
+
+    <!-- Forgot Password -->
+    <div id="forgot-form" class="hidden">
+      <h2>Forgot Password</h2>
+      <input type="email" id="forgot-email" placeholder="Enter your email">
+      <button class="btn" onclick="forgotPassword()">Send Reset Link</button>
+      <div class="link"><a href="#" onclick="showLogin()">Back to Login</a></div>
+      <div id="forgot-message" class="message"></div>
+    </div>
+
+    <!-- Reset Password -->
+    <div id="reset-form" class="hidden">
+      <h2>Reset Password</h2>
+      <input type="password" id="new-password" placeholder="New Password">
+      <input type="password" id="confirm-password" placeholder="Confirm Password">
+      <button class="btn" onclick="resetPassword()">Reset Password</button>
+      <div id="reset-message" class="message"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:5000/api"; // Backend API URL
+    let currentEmail = "";
+
+    // Show forms
+    function showForgot() {
+      document.getElementById("login-form").classList.add("hidden");
+      document.getElementById("forgot-form").classList.remove("hidden");
+    }
+    function showLogin() {
+      document.getElementById("forgot-form").classList.add("hidden");
+      document.getElementById("reset-form").classList.add("hidden");
+      document.getElementById("otp-form").classList.add("hidden");
+      document.getElementById("login-form").classList.remove("hidden");
+    }
+
+    // Login -> OTP
+    async function login() {
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+      const remember = document.getElementById("rememberMe").checked;
+
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          currentEmail = email;
+          document.getElementById("login-message").innerText = data.message;
+          document.getElementById("login-form").classList.add("hidden");
+          document.getElementById("otp-form").classList.remove("hidden");
+
+          // Save email in localStorage if Remember Me is checked
+          if (remember) {
+            localStorage.setItem("rememberedEmail", email);
+          } else {
+            localStorage.removeItem("rememberedEmail");
+          }
+        } else {
+          document.getElementById("login-message").innerText = data.message;
+          document.getElementById("login-message").classList.add("error");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Verify OTP
+    // Verify OTP
+async function verifyOtp() {
+  const otp = document.getElementById("otp-code").value;
+  try {
+    const res = await fetch(`${API}/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: currentEmail, otp }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem("token", data.token);
+
+      // ✅ Redirect to dashboard page
+      window.location.href = "dashboard.html";
+
+    } else {
+      document.getElementById("otp-message").innerText = data.message;
+      document.getElementById("otp-message").classList.add("error");
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+
+    // Forgot Password
+    async function forgotPassword() {
+      const email = document.getElementById("forgot-email").value;
+      try {
+        const res = await fetch(`${API}/forgot-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        document.getElementById("forgot-message").innerText = data.message;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Reset Password (when you open reset link manually)
+    async function resetPassword() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("token");
+      const email = urlParams.get("email");
+      const newPass = document.getElementById("new-password").value;
+      const confirmPass = document.getElementById("confirm-password").value;
+
+      if (newPass !== confirmPass) {
+        document.getElementById("reset-message").innerText = "Passwords do not match!";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/reset-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, token, newPassword: newPass }),
+        });
+        const data = await res.json();
+        document.getElementById("reset-message").innerText = data.message;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Auto-fill email if Remember Me was checked before
+    window.onload = () => {
+      const rememberedEmail = localStorage.getItem("rememberedEmail");
+      if (rememberedEmail) {
+        document.getElementById("login-email").value = rememberedEmail;
+        document.getElementById("rememberMe").checked = true;
+      }
+    };
+  </script>
+</body>
+</html>
