@@ -125,38 +125,87 @@
     }
 
     // Login -> OTP
-    async function login() {
-      const email = document.getElementById("login-email").value;
-      const password = document.getElementById("login-password").value;
-      const remember = document.getElementById("rememberMe").checked;
+    // async function login() {
+    //   const email = document.getElementById("login-email").value;
+    //   const password = document.getElementById("login-password").value;
+    //   const remember = document.getElementById("rememberMe").checked;
 
-      try {
-        const res = await fetch(`${API}/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          currentEmail = email;
-          document.getElementById("login-message").innerText = data.message;
-          document.getElementById("login-form").classList.add("hidden");
-          document.getElementById("otp-form").classList.remove("hidden");
+    //   try {
+    //     const res = await fetch(`${API}/login`, {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify({ email, password }),
+    //     });
+    //     const data = await res.json();
+    //     if (res.ok) {
+    //       currentEmail = email;
+    //       document.getElementById("login-message").innerText = data.message;
+    //       document.getElementById("login-form").classList.add("hidden");
+    //       document.getElementById("otp-form").classList.remove("hidden");
 
-          // Save email in localStorage if Remember Me is checked
-          if (remember) {
-            localStorage.setItem("rememberedEmail", email);
-          } else {
-            localStorage.removeItem("rememberedEmail");
-          }
-        } else {
-          document.getElementById("login-message").innerText = data.message;
-          document.getElementById("login-message").classList.add("error");
-        }
-      } catch (err) {
-        console.error(err);
+    //       // Save email in localStorage if Remember Me is checked
+    //       if (remember) {
+    //         localStorage.setItem("rememberedEmail", email);
+    //       } else {
+    //         localStorage.removeItem("rememberedEmail");
+    //       }
+    //     } else {
+    //       document.getElementById("login-message").innerText = data.message;
+    //       document.getElementById("login-message").classList.add("error");
+    //     }
+    //   } catch (err) {
+    //     console.error(err);
+    //   }
+    // }
+// Login -> OTP
+async function login() {
+  const email = document.getElementById("login-email").value;
+  const password = document.getElementById("login-password").value;
+  const remember = document.getElementById("rememberMe").checked;
+
+  try {
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      currentEmail = email;
+      document.getElementById("login-message").innerText = data.message;
+      document.getElementById("login-form").classList.add("hidden");
+      document.getElementById("otp-form").classList.remove("hidden");
+
+      // Save email & password in localStorage if Remember Me is checked
+      if (remember) {
+        localStorage.setItem("rememberedEmail", email);
+        localStorage.setItem("rememberedPassword", password);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+        localStorage.removeItem("rememberedPassword");
       }
+    } else {
+      document.getElementById("login-message").innerText = data.message;
+      document.getElementById("login-message").classList.add("error");
     }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// Auto-fill email & password if Remember Me was checked before
+window.onload = () => {
+  const rememberedEmail = localStorage.getItem("rememberedEmail");
+  const rememberedPassword = localStorage.getItem("rememberedPassword");
+
+  if (rememberedEmail) {
+    document.getElementById("login-email").value = rememberedEmail;
+    document.getElementById("rememberMe").checked = true;
+  }
+  if (rememberedPassword) {
+    document.getElementById("login-password").value = rememberedPassword;
+  }
+};
 
     // Verify OTP
     // Verify OTP
